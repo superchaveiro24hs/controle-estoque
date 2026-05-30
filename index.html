@@ -168,7 +168,7 @@
 </div>
 
 <script>
-// 🛡️ CONFIGURAÇÕES JÁ PRONTAS
+// 🛡️ CONFIGURAÇÕES CORRETAS
 const SENHA_ACESSO = "0135";
 const GITHUB_USUARIO = "superchaveiro24hs";
 const GITHUB_REPOSITORIO = "controle-estoque";
@@ -406,47 +406,74 @@ function atualizarTabela() {
     calcularValorTotal();
 }
 
+// ✅ FUNÇÕES DE SALVAR/CARREGAR CORRIGIDAS E OTIMIZADAS
 async function salvarDadosNoGitHub() {
     try {
-        let conteudo = btoa(unescape(encodeURIComponent(JSON.stringify(dadosEstoque,null,2))));
-        let sha = await obterShaArquivo();
-        let res = await fetch(`https://api.github.com/repos/${GITHUB_USUARIO}/${GITHUB_REPOSITORIO}/contents/${GITHUB_ARQUIVO}`,{
-            method:"PUT",
-            headers:{
-                "Authorization":`token ${GITHUB_TOKEN}`,
-                "Content-Type":"application/json"
+        const conteudo = btoa(unescape(encodeURIComponent(JSON.stringify(dadosEstoque, null, 2))));
+        const sha = await obterShaArquivo();
+        
+        const resposta = await fetch(`https://api.github.com/repos/${GITHUB_USUARIO}/${GITHUB_REPOSITORIO}/contents/${GITHUB_ARQUIVO}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${GITHUB_TOKEN}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/vnd.github.v3+json'
             },
-            body:JSON.stringify({
-                message:"Atualização automática dos dados",
-                content:conteudo,
-                sha:sha
+            body: JSON.stringify({
+                message: 'Salvamento automático - Super Chaveiro',
+                content: conteudo,
+                sha: sha || undefined
             })
         });
-        if(res.ok) {
-            document.getElementById('avisoSalvo').style.display='block';
-            setTimeout(()=>document.getElementById('avisoSalvo').style.display='none',2000);
+
+        if (resposta.ok) {
+            document.getElementById('avisoSalvo').style.display = 'block';
+            setTimeout(() => document.getElementById('avisoSalvo').style.display = 'none', 2000);
+        } else {
+            const erro = await resposta.json();
+            alert('Erro ao salvar: ' + erro.message);
         }
-    } catch(e) { alert("Erro ao salvar: "+e) }
+    } catch (erro) {
+        alert('Falha na conexão: ' + erro.message);
+    }
 }
 
 async function carregarDadosDoGitHub() {
     try {
-        let res = await fetch(`https://api.github.com/repos/${GITHUB_USUARIO}/${GITHUB_REPOSITORIO}/contents/${GITHUB_ARQUIVO}`);
-        if(res.ok) {
-            let d=await res.json();
-            let dec=decodeURIComponent(escape(atob(d.content)));
-            dadosEstoque=JSON.parse(dec);
+        const resposta = await fetch(`https://api.github.com/repos/${GITHUB_USUARIO}/${GITHUB_REPOSITORIO}/contents/${GITHUB_ARQUIVO}`, {
+            headers: { 'Accept': 'application/vnd.github.v3+json' }
+        });
+
+        if (resposta.ok) {
+            const dados = await resposta.json();
+            const decodificado = decodeURIComponent(escape(atob(dados.content)));
+            dadosEstoque = JSON.parse(decodificado);
             atualizarTabela();
+        } else if (resposta.status === 404) {
+            // Arquivo não existe ainda, cria um novo vazio
+            dadosEstoque = [];
+            await salvarDadosNoGitHub();
+        } else {
+            dadosEstoque = [];
         }
-    } catch(e) { dadosEstoque=[]; }
+    } catch (erro) {
+        dadosEstoque = [];
+    }
 }
 
 async function obterShaArquivo() {
     try {
-        let res=await fetch(`https://api.github.com/repos/${GITHUB_USUARIO}/${GITHUB_REPOSITORIO}/contents/${GITHUB_ARQUIVO}`);
-        if(res.ok) { let d=await res.json(); return d.sha; }
-        return "";
-    } catch(e) { return ""; }
+        const resposta = await fetch(`https://api.github.com/repos/${GITHUB_USUARIO}/${GITHUB_REPOSITORIO}/contents/${GITHUB_ARQUIVO}`, {
+            headers: { 'Accept': 'application/vnd.github.v3+json' }
+        });
+        if (resposta.ok) {
+            const dados = await resposta.json();
+            return dados.sha;
+        }
+        return null;
+    } catch {
+        return null;
+    }
 }
 </script>
 </body>
