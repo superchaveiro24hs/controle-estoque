@@ -168,7 +168,7 @@
 </div>
 
 <script>
-// 🛡️ CONFIGURAÇÕES CORRETAS
+// 🛡️ CONFIGURAÇÕES - NÃO ALTERADO
 const SENHA_ACESSO = "0135";
 const GITHUB_USUARIO = "superchaveiro24hs";
 const GITHUB_REPOSITORIO = "controle-estoque";
@@ -406,13 +406,27 @@ function atualizarTabela() {
     calcularValorTotal();
 }
 
-// ✅ FUNÇÕES DE SALVAR/CARREGAR CORRIGIDAS E OTIMIZADAS
+// ✅ FUNÇÕES DE SALVAR/CARREGAR REESCRITAS E GARANTIDAS
 async function salvarDadosNoGitHub() {
     try {
         const conteudo = btoa(unescape(encodeURIComponent(JSON.stringify(dadosEstoque, null, 2))));
-        const sha = await obterShaArquivo();
         
-        const resposta = await fetch(`https://api.github.com/repos/${GITHUB_USUARIO}/${GITHUB_REPOSITORIO}/contents/${GITHUB_ARQUIVO}`, {
+        // Pega o SHA atual
+        const getRes = await fetch(`https://api.github.com/repos/${GITHUB_USUARIO}/${GITHUB_REPOSITORIO}/contents/${GITHUB_ARQUIVO}`, {
+            headers: {
+                'Authorization': `token ${GITHUB_TOKEN}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+
+        let sha = null;
+        if (getRes.ok) {
+            const dados = await getRes.json();
+            sha = dados.sha;
+        }
+
+        // Envia os dados
+        const putRes = await fetch(`https://api.github.com/repos/${GITHUB_USUARIO}/${GITHUB_REPOSITORIO}/contents/${GITHUB_ARQUIVO}`, {
             method: 'PUT',
             headers: {
                 'Authorization': `token ${GITHUB_TOKEN}`,
@@ -420,59 +434,43 @@ async function salvarDadosNoGitHub() {
                 'Accept': 'application/vnd.github.v3+json'
             },
             body: JSON.stringify({
-                message: 'Salvamento automático - Super Chaveiro',
+                message: 'Salvamento automático',
                 content: conteudo,
-                sha: sha || undefined
+                sha: sha
             })
         });
 
-        if (resposta.ok) {
+        if (putRes.ok) {
             document.getElementById('avisoSalvo').style.display = 'block';
-            setTimeout(() => document.getElementById('avisoSalvo').style.display = 'none', 2000);
+            setTimeout(() => document.getElementById('avisoSalvo').style.display = 'none', 2500);
         } else {
-            const erro = await resposta.json();
-            alert('Erro ao salvar: ' + erro.message);
+            const erro = await putRes.json();
+            alert('ERRO: ' + erro.message + '\n\nVerifique se o Token tem permissão "repo"');
         }
     } catch (erro) {
-        alert('Falha na conexão: ' + erro.message);
+        alert('Falha: ' + erro.message);
     }
 }
 
 async function carregarDadosDoGitHub() {
     try {
-        const resposta = await fetch(`https://api.github.com/repos/${GITHUB_USUARIO}/${GITHUB_REPOSITORIO}/contents/${GITHUB_ARQUIVO}`, {
-            headers: { 'Accept': 'application/vnd.github.v3+json' }
+        const res = await fetch(`https://api.github.com/repos/${GITHUB_USUARIO}/${GITHUB_REPOSITORIO}/contents/${GITHUB_ARQUIVO}`, {
+            headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
         });
 
-        if (resposta.ok) {
-            const dados = await resposta.json();
+        if (res.ok) {
+            const dados = await res.json();
             const decodificado = decodeURIComponent(escape(atob(dados.content)));
             dadosEstoque = JSON.parse(decodificado);
-            atualizarTabela();
-        } else if (resposta.status === 404) {
-            // Arquivo não existe ainda, cria um novo vazio
+        } else {
+            // Se não existir, cria arquivo vazio
             dadosEstoque = [];
             await salvarDadosNoGitHub();
-        } else {
-            dadosEstoque = [];
         }
-    } catch (erro) {
+        atualizarTabela();
+    } catch (e) {
         dadosEstoque = [];
-    }
-}
-
-async function obterShaArquivo() {
-    try {
-        const resposta = await fetch(`https://api.github.com/repos/${GITHUB_USUARIO}/${GITHUB_REPOSITORIO}/contents/${GITHUB_ARQUIVO}`, {
-            headers: { 'Accept': 'application/vnd.github.v3+json' }
-        });
-        if (resposta.ok) {
-            const dados = await resposta.json();
-            return dados.sha;
-        }
-        return null;
-    } catch {
-        return null;
+        atualizarTabela();
     }
 }
 </script>
