@@ -100,12 +100,20 @@
                         <input type="text" id="codigoProduto" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition" placeholder="Ex: CHV-001">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Quantidade</label>
-                        <input type="number" id="quantidadeProduto" min="1" value="1" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Preço Unitário (R$)</label>
+                        <input type="number" id="precoProduto" min="0" step="0.01" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition" placeholder="0,00">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Quantidade em Estoque</label>
+                        <input type="number" id="quantidadeProduto" min="0" value="1" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition">
                     </div>
                     <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Observação</label>
-                        <input type="text" id="obsProduto" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition" placeholder="Detalhes adicionais">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">URL da Imagem (opcional)</label>
+                        <input type="url" id="imagemProduto" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition" placeholder="Link da imagem do produto">
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Observação / Detalhes</label>
+                        <textarea id="obsProduto" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition" placeholder="Material, tamanho, modelo..."></textarea>
                     </div>
                     <div class="md:col-span-3 flex justify-end">
                         <button type="submit" class="bg-success hover:bg-success/90 text-white font-medium px-6 py-2 rounded-lg transition">
@@ -128,16 +136,17 @@
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b border-gray-200">
+                                <th class="text-left py-3 px-2 font-semibold text-gray-600">Imagem</th>
                                 <th class="text-left py-3 px-2 font-semibold text-gray-600">Nome</th>
                                 <th class="text-left py-3 px-2 font-semibold text-gray-600">Código</th>
-                                <th class="text-center py-3 px-2 font-semibold text-gray-600">Qtd</th>
-                                <th class="text-left py-3 px-2 font-semibold text-gray-600">Observação</th>
+                                <th class="text-center py-3 px-2 font-semibold text-gray-600">Preço</th>
+                                <th class="text-center py-3 px-2 font-semibold text-gray-600">Estoque</th>
                                 <th class="text-right py-3 px-2 font-semibold text-gray-600">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="listaProdutos" class="text-gray-700">
                             <tr>
-                                <td colspan="5" class="py-4 px-2 text-center text-gray-500">Nenhum produto cadastrado ainda.</td>
+                                <td colspan="6" class="py-4 px-2 text-center text-gray-500">Nenhum produto cadastrado ainda.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -146,14 +155,56 @@
         </main>
     </div>
 
+    <!-- Modal de Edição -->
+    <div id="modalEditar" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-gray-800">Editar Produto</h3>
+                <button onclick="fecharModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <form id="formEditar" class="p-6 grid md:grid-cols-2 gap-4">
+                <input type="hidden" id="editId">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nome do Produto</label>
+                    <input type="text" id="editNome" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Código / Referência</label>
+                    <input type="text" id="editCodigo" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Preço Unitário (R$)</label>
+                    <input type="number" id="editPreco" min="0" step="0.01" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Quantidade em Estoque</label>
+                    <input type="number" id="editQuantidade" min="0" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">URL da Imagem</label>
+                    <input type="url" id="editImagem" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Observação</label>
+                    <textarea id="editObs" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
+                </div>
+                <div class="md:col-span-2 flex justify-end gap-2 mt-2">
+                    <button type="button" onclick="fecharModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancelar</button>
+                    <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
-        // CONFIGURAÇÕES - COLOQUE SUAS INFOS AQUI
-        const SENHA_SISTEMA = "123456"; // Troque pela sua senha
+        // CONFIGURAÇÕES
+        const SENHA_SISTEMA = "0135"; // SUA SENHA
         const USUARIO_GITHUB = "superchaveiro24hs";
         const REPOSITORIO_GITHUB = "controle-estoque";
         const ARQUIVO_DADOS = "dados.json";
-        // ⚠️ COLOQUE SEU TOKEN AQUI (vai te ensinar a pegar agora)
-        const TOKEN_GITHUB = "SEU_TOKEN_AQUI"; 
+        const TOKEN_GITHUB = "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"; // VOU TE ENSINAR A COLOCAR DEPOIS
 
         // Controle de Login
         const telaLogin = document.getElementById('telaLogin');
@@ -196,137 +247,167 @@
         // Gerenciar Dados
         let listaProdutos = [];
 
-        // Salvar também no navegador (para não perder nunca)
+        // SALVA TAMBÉM NO NAVEGADOR PARA NUNCA PERDER
         function salvarLocal() {
             localStorage.setItem('produtosEstoque', JSON.stringify(listaProdutos));
         }
-
         function carregarLocal() {
             const dados = localStorage.getItem('produtosEstoque');
             if (dados) listaProdutos = JSON.parse(dados);
         }
 
-        // Salvar no GitHub
+        // SALVA NO GITHUB
         async function salvarNoGitHub() {
-            if (TOKEN_GITHUB === "SEU_TOKEN_AQUI") {
-                mostrarAvisoSucesso("Salvo no navegador! (Token não configurado)");
+            if (!TOKEN_GITHUB || TOKEN_GITHUB.includes("SEU_TOKEN")) {
+                mostrarAvisoSucesso("✅ Salvo! (Aguardando configuração do GitHub)");
                 return;
             }
-
             try {
-                // 1. Pegar o arquivo atual para pegar o SHA
                 const resGet = await fetch(`https://api.github.com/repos/${USUARIO_GITHUB}/${REPOSITORIO_GITHUB}/contents/${ARQUIVO_DADOS}`);
                 const dadosArquivo = await resGet.json();
                 const sha = dadosArquivo.sha;
-
-                // 2. Preparar conteúdo
                 const conteudo = btoa(unescape(encodeURIComponent(JSON.stringify(listaProdutos, null, 2))));
-
-                // 3. Enviar alteração
                 await fetch(`https://api.github.com/repos/${USUARIO_GITHUB}/${REPOSITORIO_GITHUB}/contents/${ARQUIVO_DADOS}`, {
                     method: "PUT",
-                    headers: {
-                        "Authorization": `token ${TOKEN_GITHUB}`,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        message: "Atualização automática dos dados",
-                        content: conteudo,
-                        sha: sha,
-                        branch: "main"
-                    })
+                    headers: { Authorization: `token ${TOKEN_GITHUB}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: "Atualização", content: conteudo, sha: sha, branch: "main" })
                 });
-
-                mostrarAvisoSucesso("Salvo com sucesso no GitHub e no navegador!");
-            } catch (erro) {
-                console.error(erro);
-                mostrarAvisoSucesso("Salvo apenas no navegador!");
+                mostrarAvisoSucesso("✅ Salvo no GitHub e no navegador!");
+            } catch (e) {
+                mostrarAvisoSucesso("✅ Salvo no navegador!");
             }
         }
 
-        // Carregar dados
+        // CARREGA DADOS
         async function carregarDados() {
-            carregarLocal(); // Carrega primeiro do navegador
-
-            if (TOKEN_GITHUB !== "SEU_TOKEN_AQUI") {
+            carregarLocal(); // Primeiro carrega o que está salvo
+            if (TOKEN_GITHUB && !TOKEN_GITHUB.includes("SEU_TOKEN")) {
                 try {
                     const res = await fetch(`https://api.github.com/repos/${USUARIO_GITHUB}/${REPOSITORIO_GITHUB}/contents/${ARQUIVO_DADOS}`);
                     const dados = await res.json();
                     const conteudo = decodeURIComponent(escape(atob(dados.content)));
                     listaProdutos = JSON.parse(conteudo);
-                    salvarLocal(); // Atualiza o navegador com o que está no GitHub
-                } catch (erro) {
-                    console.log("Usando dados locais");
-                }
+                    salvarLocal(); // Atualiza o navegador
+                } catch (e) { /* usa o local */ }
             }
-
             atualizarTabela();
         }
 
-        // Cadastrar Produto
+        // CADASTRAR PRODUTO
         document.getElementById('formProduto').addEventListener('submit', (e) => {
             e.preventDefault();
-
             const produto = {
                 id: Date.now(),
                 nome: document.getElementById('nomeProduto').value,
                 codigo: document.getElementById('codigoProduto').value,
+                preco: parseFloat(document.getElementById('precoProduto').value),
                 quantidade: parseInt(document.getElementById('quantidadeProduto').value),
+                imagem: document.getElementById('imagemProduto').value,
                 observacao: document.getElementById('obsProduto').value,
                 data: new Date().toLocaleString('pt-BR')
             };
-
             listaProdutos.push(produto);
             salvarLocal();
             salvarNoGitHub();
             atualizarTabela();
-
-            // Limpar formulário
-            document.getElementById('nomeProduto').value = "";
-            document.getElementById('codigoProduto').value = "";
-            document.getElementById('quantidadeProduto').value = 1;
-            document.getElementById('obsProduto').value = "";
+            e.target.reset();
         });
 
-        // Atualizar Tabela
+        // ATUALIZAR TABELA COM TODAS AS COLUNAS
         function atualizarTabela() {
             const tbody = document.getElementById('listaProdutos');
             const total = document.getElementById('totalProdutos');
             total.textContent = listaProdutos.length;
 
             if (listaProdutos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="py-4 px-2 text-center text-gray-500">Nenhum produto cadastrado ainda.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="py-4 px-2 text-center text-gray-500">Nenhum produto cadastrado ainda.</td></tr>`;
                 return;
             }
 
             tbody.innerHTML = "";
-            listaProdutos.forEach((produto, index) => {
+            listaProdutos.forEach((produto, i) => {
                 const tr = document.createElement('tr');
-                tr.className = "border-b border-gray-100 hover:bg-gray-50 transition";
+                tr.className = "border-b border-gray-100 hover:bg-gray-50";
                 tr.innerHTML = `
-                    <td class="py-3 px-2">${produto.nome}</td>
-                    <td class="py-3 px-2">${produto.codigo || "-"}</td>
-                    <td class="py-3 px-2 text-center font-medium">${produto.quantidade}</td>
-                    <td class="py-3 px-2 text-gray-600">${produto.observacao || "-"}</td>
-                    <td class="py-3 px-2 text-right">
-                        <button onclick="excluirProduto(${index})" class="text-danger hover:text-danger/80 transition">
-                            <i class="fa fa-trash"></i>
-                        </button>
+                    <td class="py-2 px-2">
+                        ${produto.imagem ? `<img src="${produto.imagem}" class="w-12 h-12 object-cover rounded">` : '<div class="w-12 h-12 bg-gray-100 rounded flex items-center justify-center text-gray-400"><i class="fa fa-image"></i></div>'}
+                    </td>
+                    <td class="py-2 px-2 font-medium">${produto.nome}</td>
+                    <td class="py-2 px-2 text-gray-600">${produto.codigo || "-"}</td>
+                    <td class="py-2 px-2 text-center">R$ ${produto.preco.toFixed(2)}</td>
+                    <td class="py-2 px-2 text-center font-medium ${produto.quantidade <= 5 ? 'text-danger' : 'text-success'}">${produto.quantidade}</td>
+                    <td class="py-2 px-2 text-right">
+                        <button onclick="abrirEditar(${i})" class="text-primary hover:text-primary/80 mr-2"><i class="fa fa-pencil"></i></button>
+                        <button onclick="alterarEstoque(${i}, 1)" class="text-success hover:text-success/80 mr-1"><i class="fa fa-plus"></i></button>
+                        <button onclick="alterarEstoque(${i}, -1)" class="text-warning hover:text-warning/80 mr-2"><i class="fa fa-minus"></i></button>
+                        <button onclick="excluirProduto(${i})" class="text-danger hover:text-danger/80"><i class="fa fa-trash"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        // Excluir Produto
-        function excluirProduto(index) {
-            if (confirm("Deseja excluir esse produto?")) {
-                listaProdutos.splice(index, 1);
+        // FUNÇÕES DE EDIÇÃO, ESTOQUE E EXCLUSÃO
+        let indiceEdicao = -1;
+        const modal = document.getElementById('modalEditar');
+
+        function abrirEditar(i) {
+            indiceEdicao = i;
+            const p = listaProdutos[i];
+            document.getElementById('editId').value = p.id;
+            document.getElementById('editNome').value = p.nome;
+            document.getElementById('editCodigo').value = p.codigo;
+            document.getElementById('editPreco').value = p.preco;
+            document.getElementById('editQuantidade').value = p.quantidade;
+            document.getElementById('editImagem').value = p.imagem || "";
+            document.getElementById('editObs').value = p.observacao || "";
+            modal.classList.remove('hidden');
+        }
+
+        function fecharModal() {
+            modal.classList.add('hidden');
+            indiceEdicao = -1;
+        }
+
+        document.getElementById('formEditar').addEventListener('submit', (e) => {
+            e.preventDefault();
+            listaProdutos[indiceEdicao] = {
+                ...listaProdutos[indiceEdicao],
+                nome: document.getElementById('editNome').value,
+                codigo: document.getElementById('editCodigo').value,
+                preco: parseFloat(document.getElementById('editPreco').value),
+                quantidade: parseInt(document.getElementById('editQuantidade').value),
+                imagem: document.getElementById('editImagem').value,
+                observacao: document.getElementById('editObs').value
+            };
+            salvarLocal();
+            salvarNoGitHub();
+            atualizarTabela();
+            fecharModal();
+            mostrarAvisoSucesso("Produto atualizado!");
+        });
+
+        function alterarEstoque(i, qtd) {
+            listaProdutos[i].quantidade += qtd;
+            if (listaProdutos[i].quantidade < 0) listaProdutos[i].quantidade = 0;
+            salvarLocal();
+            salvarNoGitHub();
+            atualizarTabela();
+        }
+
+        function excluirProduto(i) {
+            if (confirm("Excluir esse produto?")) {
+                listaProdutos.splice(i, 1);
                 salvarLocal();
                 salvarNoGitHub();
                 atualizarTabela();
             }
         }
+
+        // Fechar modal ao clicar fora
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) fecharModal();
+        });
     </script>
 </body>
 </html>
