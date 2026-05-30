@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔒 Super Chaveiro - Controle de Estoque</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { background-color: #f5f5f5; padding: 20px; line-height: 1.5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 10px; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+
+        /* TELA DE LOGIN */
+        #telaLogin {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.85); z-index:9999;
+            display:flex; align-items:center; justify-content:center;
+        }
+        .caixaLogin {
+            background:white; padding:30px; border-radius:10px; text-align:center;
+            box-shadow:0 0 20px rgba(255,255,255,0.2);
+        }
+        .caixaLogin h2 { margin-bottom:20px; color:#2c3e50; }
+        .caixaLogin input {
+            padding:12px; width:250px; margin-bottom:15px;
+            border:1px solid #ccc; border-radius:6px; font-size:16px;
+        }
+        .caixaLogin button {
+            padding:12px 25px; background:#27ae60; color:white;
+            border:none; border-radius:6px; font-weight:bold; cursor:pointer;
+        }
+        .erroSenha { color:red; display:none; margin-top:10px; }
+
+        .cabecalho { background-color: #3498db; color: white; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-size: 22px; font-weight: bold; }
+        .alerta { background-color: #e74c3c; color: white; padding: 12px; border-radius: 5px; margin-bottom: 15px; display: none; font-weight: bold; text-align: center; }
+        .resumo { background-color: #f0f8ff; padding: 12px; border-radius: 5px; margin-bottom: 15px; font-weight: bold; color: #2c3e50; text-align: center; font-size: 16px; }
+        .aviso-salvo { background: #27ae60; color: white; padding: 8px; border-radius: 5px; text-align: center; margin: 10px 0; display: none; }
+        .botoes-topo { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .btn-relatorio { background-color: #9b59b6; padding: 10px 15px; border-radius: 5px; color: white; border: none; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; }
+        .btn-relatorio:hover { opacity: 0.9; transform: scale(1.02); }
+        .busca { margin-bottom: 20px; }
+        .busca input { width: 100%; padding: 12px 15px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; transition: border 0.3s; }
+        .busca input:focus { outline: none; border-color: #3498db; box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1); }
+        .form-cadastro { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; background: #f0f8ff; padding: 20px; border-radius: 8px; align-items: center; }
+        .campo-descricao { grid-column: 1 / -1; }
+        input, textarea, button, label { padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; width: 100%; }
+        textarea { resize: vertical; min-height: 60px; font-family: Arial, sans-serif; }
+        input:focus, textarea:focus { outline: none; border-color: #3498db; box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1); }
+        button { background-color: #27ae60; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-excluir { background-color: #e74c3c; }
+        .btn-editar { background-color: #f39c12; }
+        .btn-adicionar { background-color: #3498db; }
+        .arquivo-imagem { display: none; }
+        .label-arquivo { background-color: #95a5a6; color: white; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center; height: 100%; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 10px; border-radius: 8px; overflow: hidden; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #ddd; vertical-align: middle; }
+        th { background-color: #3498db; color: white; cursor: pointer; font-weight: bold; font-size: 14px; text-align: center; border-right: 1px solid rgba(255,255,255,0.2); }
+        th:last-child { border-right: none; }
+        th:hover { background-color: #2980b9; }
+        td { text-align: center; background-color: #fff; }
+        tr:hover td { background-color: #f8f9fa; }
+        .estoque-baixo { background-color: #ffebee !important; color: #c62828; font-weight: bold; }
+        .img-produto { width: 100px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #eee; background-color: #f9f9f9; cursor: pointer; transition: all 0.2s; }
+        .img-produto:hover { opacity: 0.85; transform: scale(1.05); }
+        .modal-imagem { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.85); padding-top: 50px; }
+        .modal-conteudo-imagem { margin: auto; display: block; width: 800px; max-width: 95%; border-radius: 6px; box-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        .descricao-popup { width: 800px; max-width: 95%; margin: 15px auto 0; background: white; color: #333; padding: 15px; border-radius: 6px; font-size: 15px; line-height: 1.6; text-align: center; box-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        .fechar-imagem { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .fechar-imagem:hover { color: #bbb; }
+        .btn-acoes { display: flex; flex-direction: row; gap: 10px; align-items: center; justify-content: center; }
+        .coluna { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+        .qtd-lote { width: 50px; text-align: center; padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
+        .btn-add { background-color: #27ae60; width: 70px; font-size: 12px; padding: 6px; }
+        .btn-sub { background-color: #f39c12; width: 70px; font-size: 12px; padding: 6px; }
+        .btn-editar, .btn-excluir { width: 70px; font-size: 12px; padding: 6px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; }
+        .modal-conteudo { background: white; max-width: 550px; margin: 3% auto; padding: 25px; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
+        .modal-conteudo h3 { margin-bottom: 15px; color: #2c3e50; text-align: center; }
+    </style>
+</head>
+<body>
+
+<!-- 🛡️ TELA DE LOGIN -->
+<div id="telaLogin">
+    <div class="caixaLogin">
+        <h2>🔒 Acesso ao Estoque</h2>
+        <input type="password" id="senhaAcesso" placeholder="Digite sua senha...">
+        <button onclick="verificarSenha()">Entrar</button>
+        <div class="erroSenha" id="erroSenha">Senha incorreta! Tente novamente.</div>
+    </div>
+</div>
+
+<div class="container" id="sistemaCompleto" style="display:none;">
+    <div class="cabecalho">🔑 Super Chaveiro - Controle de Estoque</div>
+    <div class="aviso-salvo" id="avisoSalvo">✅ Dados salvos no GitHub!</div>
+
+    <div class="alerta" id="alertaGeral">⚠️ Atenção: Existem produtos com estoque abaixo do mínimo!</div>
+    <div class="resumo" id="resumoEstoque">💰 Valor total do estoque: R$ 0,00</div>
+
+    <div class="botoes-topo">
+        <button onclick="verRelatorioBaixo()" class="btn-relatorio">📋 Ver Relatório de Estoque Baixo</button>
+        <button onclick="window.print()" class="btn-relatorio">🖨️ Imprimir Lista</button>
+    </div>
+
+    <div class="busca">
+        <input type="text" id="campoBusca" placeholder="🔍 Pesquisar por Código ou Nome do Produto..." onkeyup="filtrarTabela()">
+    </div>
+
+    <div class="form-cadastro">
+        <input type="text" id="codigo" placeholder="Código *" required onblur="verificarCodigoExistente()">
+        <input type="text" id="nome" placeholder="Nome do Produto *" required spellcheck="true" lang="pt-BR">
+        <div class="campo-descricao">
+            <textarea id="descricao" placeholder="📝 Descrição detalhada do produto (opcional)" spellcheck="true" lang="pt-BR"></textarea>
+        </div>
+        <input type="number" id="atual" placeholder="Qtd Atual / Adicionar" min="0" required>
+        <input type="number" id="minimo" placeholder="Qtd Mínima *" min="1" required>
+        <input type="number" id="custo" placeholder="Preço Custo" step="0.01">
+        <input type="number" id="venda" placeholder="Preço Venda" step="0.01">
+        <label for="imagem" class="label-arquivo">📎 Escolher Imagem (JPG/PNG/GIF)</label>
+        <input type="file" id="imagem" accept="image/*" class="arquivo-imagem" onchange="lerImagem(this)">
+        <input type="hidden" id="imagemBase64">
+        <button onclick="cadastrarOuAdicionar()" class="btn-adicionar">Cadastrar / Adicionar Estoque</button>
+    </div>
+
+    <table id="tabelaEstoque">
+        <thead>
+            <tr>
+                <th onclick="ordenarTabela(0)">Imagem</th>
+                <th onclick="ordenarTabela(1)">Código 🔽</th>
+                <th onclick="ordenarTabela(2)">Produto 🔽</th>
+                <th onclick="ordenarTabela(3)">Atual 🔽</th>
+                <th onclick="ordenarTabela(4)">Mínimo 🔽</th>
+                <th onclick="ordenarTabela(5)">Custo (R$) 🔽</th>
+                <th onclick="ordenarTabela(6)">Venda (R$) 🔽</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
+
+<div id="modalImagem" class="modal-imagem">
+    <span class="fechar-imagem" onclick="fecharImagem()">&times;</span>
+    <img class="modal-conteudo-imagem" id="imagemAmpliada">
+    <div class="descricao-popup" id="textoDescricao"></div>
+</div>
+
+<div id="modalEditar" class="modal">
+    <div class="modal-conteudo">
+        <h3>✏️ Editar Produto</h3>
+        <div class="form-cadastro">
+            <input type="hidden" id="edit-codigo">
+            <input type="text" id="edit-nome" placeholder="Nome" spellcheck="true" lang="pt-BR">
+            <div class="campo-descricao">
+                <textarea id="edit-descricao" placeholder="📝 Descrição detalhada" spellcheck="true" lang="pt-BR"></textarea>
+            </div>
+            <input type="number" id="edit-minimo" placeholder="Qtd Mínima">
+            <input type="number" id="edit-custo" placeholder="Custo" step="0.01">
+            <input type="number" id="edit-venda" placeholder="Venda" step="0.01">
+            <label for="edit-imagem" class="label-arquivo">📎 Trocar Imagem</label>
+            <input type="file" id="edit-imagem" accept="image/*" class="arquivo-imagem" onchange="lerImagemEditar(this)">
+            <input type="hidden" id="edit-imagemBase64">
+            <button onclick="salvarEdicao()" class="btn-adicionar">Salvar Alterações</button>
+            <button onclick="fecharModal()" class="btn-excluir">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// 🛡️ CONFIGURAÇÕES - TROQUE AQUI!
+const SENHA_ACESSO = "0135"; // ← COLOQUE A SENHA QUE VOCÊ QUISER (ex: 123456, chaveiro...)
+const GITHUB_USUARIO = "superchaveiro24hs"; // ← COLOQUE SEU NOME DE USUÁRIO DO GITHUB
+const GITHUB_REPOSITORIO = "controle-estoque";
+const GITHUB_ARQUIVO = "dados.json";
+const GITHUB_TOKEN = "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"; // ← COLE A CHAVE QUE VOCÊ GUARDOU AGORA POUCO
+
+let ordemCrescente = true;
+let dadosEstoque = [];
+
+// 🛡️ VERIFICAR SENHA
+function verificarSenha() {
+    let senha = document.getElementById('senhaAcesso').value;
+    if (senha === SENHA_ACESSO) {
+        document.getElementById('telaLogin').style.display = 'none';
+        document.getElementById('sistemaCompleto').style.display = 'block';
+        carregarDadosDoGitHub();
+        verificarEstoqueBaixo();
+        calcularValorTotal();
+    } else {
+        document.getElementById('erroSenha').style.display = 'block';
+        setTimeout(()=> document.getElementById('erroSenha').style.display = 'none', 2000);
+    }
+}
+
+function lerImagem(input) {
+    if (input.files && input.files[0]) {
+        let leitor = new FileReader();
+        leitor.onload = function(e) {
+            document.getElementById('imagemBase64').value = e.target.result;
+        }
+        leitor.readAsDataURL(input.files[0]);
+    }
+}
+function lerImagemEditar(input) {
+    if (input.files && input.files[0]) {
+        let leitor = new FileReader();
+        leitor.onload = function(e) {
+            document.getElementById('edit-imagemBase64').value = e.target.result;
+        }
+        leitor.readAsDataURL(input.files[0]);
+    }
+}
+
+function abrirImagem(src, descricao) {
+    document.getElementById('imagemAmpliada').src = src;
+    document.getElementById('textoDescricao').innerHTML = descricao || "<em>Sem descrição cadastrada para este produto.</em>";
+    document.getElementById('modalImagem').style.display = "block";
+}
+function fecharImagem() {
+    document.getElementById('modalImagem').style.display = "none";
+}
+window.onclick = function(event) {
+    let modalImg = document.getElementById('modalImagem');
+    let modalEdit = document.getElementById('modalEditar');
+    if (event.target == modalImg) modalImg.style.display = "none";
+    if (event.target == modalEdit) modalEdit.style.display = "none";
+}
+
+function verificarCodigoExistente() {
+    let cod = document.getElementById('codigo').value.trim();
+    if (!cod) return;
+    let produto = dadosEstoque.find(p => p.cod === cod);
+    if (produto) {
+        document.getElementById('nome').value = produto.nome;
+        document.getElementById('descricao').value = produto.descricao;
+        document.getElementById('minimo').value = produto.min;
+        document.getElementById('custo').value = produto.custo;
+        document.getElementById('venda').value = produto.venda;
+        document.getElementById('imagemBase64').value = produto.img;
+        document.getElementById('atual').placeholder = "Digite QUANTIDADE PARA ADICIONAR";
+    } else {
+        document.getElementById('nome').value = '';
+        document.getElementById('descricao').value = '';
+        document.getElementById('minimo').value = '';
+        document.getElementById('custo').value = '';
+        document.getElementById('venda').value = '';
+        document.getElementById('imagemBase64').value = '';
+        document.getElementById('atual').placeholder = "Qtd Atual *";
+    }
+}
+
+function cadastrarOuAdicionar() {
+    let cod = document.getElementById('codigo').value.trim();
+    let nome = document.getElementById('nome').value.trim();
+    let desc = document.getElementById('descricao').value.trim();
+    let qtdAdicionar = parseInt(document.getElementById('atual').value) || 0;
+    let min = parseInt(document.getElementById('minimo').value) || 1;
+    let custo = parseFloat(document.getElementById('custo').value) || 0;
+    let venda = parseFloat(document.getElementById('venda').value) || 0;
+    let img = document.getElementById('imagemBase64').value || 'https://via.placeholder.com/100x60?text=Sem+Imagem';
+
+    if (!cod || !nome) { alert('Preencha Código e Nome!'); return; }
+    if (qtdAdicionar <= 0) { alert('Digite uma quantidade válida!'); return; }
+
+    let index = dadosEstoque.findIndex(p => p.cod === cod);
+    if (index >= 0) {
+        if (!confirm(`⚠️ CONFIRMAÇÃO:\nDeseja adicionar ${qtdAdicionar} unidades ao produto:\n${nome}?`)) return;
+        dadosEstoque[index].qtd += qtdAdicionar;
+        alert(`✅ Adicionado com sucesso!\nTotal atual: ${dadosEstoque[index].qtd}`);
+    } else {
+        if (!confirm(`⚠️ CONFIRMAÇÃO:\nDeseja cadastrar novo produto?\nCódigo: ${cod}\nNome: ${nome}\nQuantidade: ${qtdAdicionar}`)) return;
+        dadosEstoque.push({cod, nome, descricao:desc, qtd:qtdAdicionar, min, custo, venda, img});
+        alert(`✅ Produto cadastrado com sucesso!`);
+    }
+
+    document.querySelectorAll('.form-cadastro input, .form-cadastro textarea').forEach(i => i.value = '');
+    document.getElementById('atual').placeholder = "Qtd Atual *";
+    atualizarTabela();
+    salvarDadosNoGitHub();
+}
+
+function adicionarLote(cod) {
+    let qtd = parseInt(document.getElementById(`add-qtd-${cod}`).value) || 1;
+    let index = dadosEstoque.findIndex(p => p.cod === cod);
+    if (index >=0) {
+        dadosEstoque[index].qtd += qtd;
+        atualizarTabela();
+        salvarDadosNoGitHub();
+    }
+}
+
+function diminuirLote(cod) {
+    let qtd = parseInt(document.getElementById(`sub-qtd-${cod}`).value) || 1;
+    let index = dadosEstoque.findIndex(p => p.cod === cod);
+    if (index >=0 && dadosEstoque[index].qtd >= qtd) {
+        dadosEstoque[index].qtd -= qtd;
+        atualizarTabela();
+        salvarDadosNoGitHub();
+    } else alert("Quantidade insuficiente!");
+}
+
+function verificarEstoqueBaixo() {
+    let alerta = dadosEstoque.some(p => p.qtd < p.min);
+    document.getElementById('alertaGeral').style.display = alerta ? 'block' : 'none';
+}
+
+function ordenarTabela(coluna) {
+    const colunas = ['img','cod','nome','qtd','min','custo','venda'];
+    dadosEstoque.sort((a,b)=>{
+        let va=a[colunas[coluna]], vb=b[colunas[coluna]];
+        if(typeof va==='number') return ordemCrescente ? va-vb : vb-va;
+        return ordemCrescente ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
+    ordemCrescente=!ordemCrescente;
+    atualizarTabela();
+}
+
+function filtrarTabela() {
+    let termo = document.getElementById('campoBusca').value.toLowerCase().trim();
+    let linhas = document.querySelectorAll('#tabelaEstoque tbody tr');
+    linhas.forEach((linha,i)=>{
+        let p=dadosEstoque[i];
+        let visivel=p.cod.toLowerCase().includes(termo) || p.nome.toLowerCase().includes(termo);
+        linha.style.display=visivel?'':'none';
+    });
+}
+
+function abrirEditar(btn) {
+    let linha = btn.closest('tr');
+    let cod = linha.dataset.cod;
+    let p = dadosEstoque.find(x=>x.cod===cod);
+    document.getElementById('edit-codigo').value = p.cod;
+    document.getElementById('edit-nome').value = p.nome;
+    document.getElementById('edit-descricao').value = p.descricao;
+    document.getElementById('edit-minimo').value = p.min;
+    document.getElementById('edit-custo').value = p.custo;
+    document.getElementById('edit-venda').value = p.venda;
+    document.getElementById('edit-imagemBase64').value = p.img;
+    document.getElementById('modalEditar').style.display = 'block';
+}
+
+function salvarEdicao() {
+    if (!confirm("⚠️ CONFIRMAÇÃO:\nDeseja salvar as alterações?")) return;
+    let cod = document.getElementById('edit-codigo').value;
+    let p = dadosEstoque.find(x=>x.cod===cod);
+    p.nome = document.getElementById('edit-nome').value;
+    p.descricao = document.getElementById('edit-descricao').value;
+    p.min = parseInt(document.getElementById('edit-minimo').value);
+    p.custo = parseFloat(document.getElementById('edit-custo').value);
+    p.venda = parseFloat(document.getElementById('edit-venda').value);
+    p.img = document.getElementById('edit-imagemBase64').value;
+    fecharModal();
+    atualizarTabela();
+    salvarDadosNoGitHub();
+}
+
+function fecharModal() {
+    document.getElementById('modalEditar').style.display = 'none';
+}
+
+function verRelatorioBaixo() {
+    let lista = dadosEstoque.filter(p=>p.qtd<p.min).map(p=>`${p.cod} - ${p.nome}: ${p.qtd} unid. (Mín: ${p.min})`);
+    alert(lista.length ? '📋 Estoque Baixo:\n\n' + lista.join('\n') : '✅ Nenhum produto com estoque baixo!');
+}
+
+function calcularValorTotal() {
+    let total = dadosEstoque.reduce((s,p)=>s + p.qtd * p.custo,0);
+    document.getElementById('resumoEstoque').textContent = `💰 Valor total do estoque: R$ ${total.toFixed(2).replace('.',',')}`;
+}
+
+function excluirLinha(btn) {
+    let linha = btn.closest('tr');
+    let cod = linha.dataset.cod;
+    if (confirm("⚠️ CONFIRMAÇÃO:\nTem certeza que deseja EXCLUIR este produto?")) {
+        dadosEstoque = dadosEstoque.filter(p=>p.cod!==cod);
+        atualizarTabela();
+        salvarDadosNoGitHub();
+    }
+}
+
+function atualizarTabela() {
+    let tabela = document.querySelector('#tabelaEstoque tbody');
+    tabela.innerHTML = '';
+    dadosEstoque.forEach(p=>{
+        let tr = document.createElement('tr');
+        tr.dataset.cod = p.cod;
+        tr.className = p.qtd < p.min ? 'estoque-baixo' : '';
+        tr.innerHTML = `
+            <td><img src="${p.img}" class="img-produto" alt="Imagem" onclick="abrirImagem('${p.img}', '${p.descricao.replace(/'/g,"&#39;")}')"></td>
+            <td>${p.cod}</td>
+            <td>${p.nome}</td>
+            <td id="qtd-${p.cod}">${p.qtd}</td>
+            <td>${p.min}</td>
+            <td>${p.custo.toFixed(2).replace('.',',')}</td>
+            <td>${p.venda.toFixed(2).replace('.',',')}</td>
+            <td class="btn-acoes">
+                <div class="coluna"><input type="number" class="qtd-lote" id="add-qtd-${p.cod}" value="1"><input type="number" class="qtd-lote" id="sub-qtd-${p.cod}" value="1"></div>
+                <div class="coluna"><button class="btn-add" onclick="adicionarLote('${p.cod}')">➕ Add</button><button class="btn-sub" onclick="diminuirLote('${p.cod}')">➖ Retirar</button></div>
+                <div class="coluna"><button class="btn-editar" onclick="abrirEditar(this)">✏️ Editar</button><button class="btn-excluir" onclick="excluirLinha(this)">X Excluir</button></div>
+            </td>
+        `;
+        tabela.appendChild(tr);
+    });
+    verificarEstoqueBaixo();
+    calcularValorTotal();
+}
+
+async function salvarDadosNoGitHub() {
+    try {
+        let conteudo = btoa(unescape(encodeURIComponent(JSON.stringify(dadosEstoque,null,2))));
+        let sha = await obterShaArquivo();
+        let res = await fetch(`https://api.github.com/repos/${GITHUB_USUARIO}/${GITHUB_REPOSITORIO}/contents/${GITHUB_ARQUIVO}`,{
+            method:"PUT",
+            headers:{
+                "Authorization":`token ${GITHUB_TOKEN}`,
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                message:"Atualização automática dos dados",
+                content:conteudo,
+                sha:sha
+            })
+        });
+        if(res.ok) {
+            document.getElementById('avisoSalvo').style.display='block';
+            setTimeout(()=>document.getElementById('avisoSalvo').style.display='none',2000);
+        }
+    } catch(e) { alert("Erro ao salvar: "+e) }
+}
+
+async function carregarDadosDoGitHub() {
+    try {
+        let res = await fetch(`https://api.github.com/repos/${GITHUB_USUARIO}/${GITHUB_REPOSITORIO}/contents/${GITHUB_ARQUIVO}`);
+        if(res.ok) {
+            let d=await res.json();
+            let dec=decodeURIComponent(escape(atob(d.content)));
+            dadosEstoque=JSON.parse(dec);
+            atualizarTabela();
+        }
+    } catch(e) { dadosEstoque=[]; }
+}
+
+async function obterShaArquivo() {
+    try {
+        let res=await fetch(`https://api.github.com/repos/${GITHUB_USUARIO}/${GITHUB_REPOSITORIO}/contents/${GITHUB_ARQUIVO}`);
+        if(res.ok) { let d=await res.json(); return d.sha; }
+        return "";
+    } catch(e) { return ""; }
+}
+</script>
+</body>
+</html>
